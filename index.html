@@ -128,20 +128,23 @@
   <div class="addr" id="addrDisplay"></div>
   <div class="row" style="margin-top:14px"><span class="label">BNB Balance</span><span class="value" id="bnbBalance">-</span></div>
 
-  <div class="token-select">
-    <button id="btnBITS" class="active">Digital Bits (BITS)</button>
-    <button id="btnBITJEW">BITJEW</button>
-  </div>
-
   <div class="big-balance" id="tokenBalance">-</div>
-  <div class="status" id="tokenName" style="text-align:center;margin-bottom:16px">-</div>
+  <div class="status" id="tokenName" style="text-align:center;margin-bottom:16px">Digital Bits</div>
 
   <div class="tabs">
-    <button class="active" data-tab="send">Send</button>
+    <button class="active" data-tab="buy">Buy</button>
+    <button data-tab="send">Send</button>
     <button data-tab="stake">Stake</button>
   </div>
 
-  <div class="panel active" id="panel-send">
+  <div class="panel active" id="panel-buy">
+    <div class="row"><span class="label">You pay</span></div>
+    <input id="buyBnbAmount" placeholder="BNB amount" type="number" step="any">
+    <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="buyEstimate">-</span></div>
+    <button class="primary" id="buyBtn">Buy BITS</button>
+  </div>
+
+  <div class="panel" id="panel-send">
     <input id="sendTo" placeholder="Recipient address (0x...)">
     <input id="sendAmount" placeholder="Amount" type="number">
     <button class="primary" id="sendBtn">Send</button>
@@ -161,10 +164,8 @@
 </div>
 
 <script>
-const TOKENS = {
-  BITS:   { address: "0x1b6E1196f7a4812bf9C16e70b406e32bB0618fbD", name: "Digital Bits" },
-  BITJEW: { address: "0x7bf59739F614eF383E6fc531b952C113fc1DC640", name: "BITJEW" }
-};
+const BITS_ADDRESS = "0x1b6E1196f7a4812bf9C16e70b406e32bB0618fbD";
+const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 
 const ABI = [
   "function balanceOf(address) view returns (uint256)",
@@ -178,9 +179,16 @@ const ABI = [
   "function timeUntilNextReward(address) view returns (uint256)"
 ];
 
+const ROUTER_ABI = [
+  "function WETH() view returns (address)",
+  "function getAmountsOut(uint amountIn, address[] path) view returns (uint[] memory)",
+  "function swapExactETHForTokens(uint amountOutMin, address[] path, address to, uint deadline) payable returns (uint[] memory)"
+];
+
 const BSC_RPC = "https://bsc-dataseed.binance.org/";
-let provider, signer, currentToken = "BITS";
+let provider, signer;
 let pendingWallet = null;
+let buyEstimateTimer = null;
 
 async function connect() {
   if (!window.ethereum) {
@@ -245,8 +253,7 @@ async function refresh() {
   const bnbBal = await provider.getBalance(addr);
   document.getElementById('bnbBalance').textContent = parseFloat(ethers.formatEther(bnbBal)).toFixed(5) + " BNB";
 
-  const token = TOKENS[currentToken];
-  const contract = new ethers.Contract(token.address, ABI, provider);
+  const contract = new ethers.Contract(BITS_ADDRESS, ABI, provider);
   const [bal, dec, staked, nextReward] = await Promise.all([
     contract.balanceOf(addr),
     contract.decimals(),
@@ -255,7 +262,6 @@ async function refresh() {
   ]);
 
   document.getElementById('tokenBalance').textContent = parseFloat(ethers.formatUnits(bal, dec)).toLocaleString();
-  document.getElementById('tokenName').textContent = token.name;
   document.getElementById('stakedAmount').textContent = parseFloat(ethers.formatUnits(staked, dec)).toLocaleString();
 
   const secs = Number(nextReward);
@@ -269,11 +275,53 @@ async function refresh() {
   }
 }
 
-function switchToken(tok) {
-  currentToken = tok;
-  document.getElementById('btnBITS').classList.toggle('active', tok === 'BITS');
-  document.getElementById('btnBITJEW').classList.toggle('active', tok === 'BITJEW');
-  refresh();
+async function updateBuyEstimate() {
+  const amount = document.getElementById('buyBnbAmount').value;
+  const estimateEl = document.getElementById('buyEstimate');
+  if (!amount || Number(amount) <= 0) {
+    estimateEl.textContent = "-";
+    return;
+  }
+  try {
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
+    const weth = await router.WETH();
+    const amounts = await router.getAmountsOut(ethers.parseEther(amount), [weth, BITS_ADDRESS]);
+    const contract = new ethers.Contract(BITS_ADDRESS, ABI, provider);
+    const dec = await contract.decimals();
+    estimateEl.textContent = parseFloat(ethers.formatUnits(amounts[1], dec)).toLocaleString() + " BITS";
+  } catch (e) {
+    estimateEl.textContent = "No liquidity / error";
+  }
+}
+
+async function buyTokens() {
+  const amount = document.getElementById('buyBnbAmount').value;
+  const status = document.getElementById('txStatus');
+  if (!amount || Number(amount) <= 0) {
+    status.textContent = "Enter a valid BNB amount.";
+    return;
+  }
+  try {
+    status.textContent = "Fetching quote...";
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, signer);
+    const weth = await router.WETH();
+    const amountIn = ethers.parseEther(amount);
+    const amounts = await router.getAmountsOut(amountIn, [weth, BITS_ADDRESS]);
+    const minOut = (amounts[1] * 95n) / 100n; // 5% slippage tolerance
+    const deadline = Math.floor(Date.now() / 1000) + 600;
+    const addr = await signer.getAddress();
+
+    status.textContent = "Confirm transaction...";
+    const tx = await router.swapExactETHForTokens(minOut, [weth, BITS_ADDRESS], addr, deadline, { value: amountIn });
+    status.textContent = "Buying...";
+    await tx.wait();
+    status.textContent = "Bought!";
+    document.getElementById('buyBnbAmount').value = '';
+    document.getElementById('buyEstimate').textContent = '-';
+    await refresh();
+  } catch (e) {
+    status.textContent = "Error: " + (e.shortMessage || e.message);
+  }
 }
 
 async function sendTokens() {
@@ -290,8 +338,7 @@ async function sendTokens() {
   }
   try {
     status.textContent = "Confirm transaction...";
-    const token = TOKENS[currentToken];
-    const contract = new ethers.Contract(token.address, ABI, signer);
+    const contract = new ethers.Contract(BITS_ADDRESS, ABI, signer);
     const dec = await contract.decimals();
     const tx = await contract.transfer(to, ethers.parseUnits(amount, dec));
     status.textContent = "Sending...";
@@ -316,9 +363,8 @@ async function claimReward() {
 async function contractAction(method, amount) {
   const status = document.getElementById('txStatus');
   try {
-    status.textContent = "Confirm in MetaMask...";
-    const token = TOKENS[currentToken];
-    const contract = new ethers.Contract(token.address, ABI, signer);
+    status.textContent = "Confirm transaction...";
+    const contract = new ethers.Contract(BITS_ADDRESS, ABI, signer);
     let tx;
     if (amount !== null) {
       const dec = await contract.decimals();
@@ -346,8 +392,11 @@ document.getElementById('savedCheckbox').onchange = (e) => {
   document.getElementById('continueBtn').disabled = !e.target.checked;
 };
 document.getElementById('continueBtn').onclick = continueToWallet;
-document.getElementById('btnBITS').onclick = () => switchToken('BITS');
-document.getElementById('btnBITJEW').onclick = () => switchToken('BITJEW');
+document.getElementById('buyBtn').onclick = buyTokens;
+document.getElementById('buyBnbAmount').oninput = () => {
+  clearTimeout(buyEstimateTimer);
+  buyEstimateTimer = setTimeout(updateBuyEstimate, 400);
+};
 document.getElementById('sendBtn').onclick = sendTokens;
 document.getElementById('stakeBtn').onclick = stakeTokens;
 document.getElementById('unstakeBtn').onclick = unstakeTokens;
