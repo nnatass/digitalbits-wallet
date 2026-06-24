@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <title>Digital Bits Wallet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"
+        integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
+        crossorigin="anonymous"></script>
 <style>
   :root {
     --purple: #8b3fd1;
@@ -111,7 +113,12 @@
 </div>
 
 <div class="card" id="importCard" style="display:none">
-  <input id="importInput" placeholder="Paste private key (0x...) or 12-word recovery phrase">
+  <div class="status" style="color:#e85fd0;margin-bottom:10px">This runs entirely in your browser — your key is never sent anywhere. Still, only do this on a device you trust.</div>
+  <input id="importInput" type="password" placeholder="Paste private key (0x...) or 12-word recovery phrase">
+  <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:#cbb8e8">
+    <input type="checkbox" id="showImportInput" style="width:auto;margin:0">
+    Show
+  </label>
   <button class="primary" id="importSubmitBtn">Import</button>
   <div class="status" id="importStatus"></div>
 </div>
@@ -273,8 +280,16 @@ async function sendTokens() {
   const to = document.getElementById('sendTo').value.trim();
   const amount = document.getElementById('sendAmount').value;
   const status = document.getElementById('txStatus');
+  if (!ethers.isAddress(to)) {
+    status.textContent = "Invalid recipient address.";
+    return;
+  }
+  if (!amount || Number(amount) <= 0) {
+    status.textContent = "Enter a valid amount.";
+    return;
+  }
   try {
-    status.textContent = "Confirm in MetaMask...";
+    status.textContent = "Confirm transaction...";
     const token = TOKENS[currentToken];
     const contract = new ethers.Contract(token.address, ABI, signer);
     const dec = await contract.decimals();
@@ -324,6 +339,9 @@ document.getElementById('connectBtn').onclick = connect;
 document.getElementById('createBtn').onclick = createNewWallet;
 document.getElementById('importBtn').onclick = showImportCard;
 document.getElementById('importSubmitBtn').onclick = importWallet;
+document.getElementById('showImportInput').onchange = (e) => {
+  document.getElementById('importInput').type = e.target.checked ? 'text' : 'password';
+};
 document.getElementById('savedCheckbox').onchange = (e) => {
   document.getElementById('continueBtn').disabled = !e.target.checked;
 };
