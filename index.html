@@ -161,11 +161,24 @@
   </div>
 
   <div class="panel active" id="panel-buy">
-    <div class="row"><span class="label">You pay</span></div>
+    <div id="noBnbGuide" style="display:none;background:#fff;border:1px solid #7f9db9;padding:8px;margin-bottom:10px;font-size:11px;line-height:1.6">
+      <b>No BNB yet? Here's exactly how to get some:</b><br>
+      1. Click "Buy BNB on Binance" below &mdash; buy a small amount with a card<br>
+      2. On Binance, go to <b>Withdraw</b> &rarr; asset <b>BNB</b> &rarr; network <b>BNB Smart Chain (BEP20)</b><br>
+      3. Paste this address as the destination:<br>
+      <div style="display:flex;gap:4px;margin:4px 0">
+        <div class="addr" id="guideAddr" style="flex:1;margin:0"></div>
+        <button class="primary" id="copyAddrBtn" style="width:auto;margin:0;padding:4px 8px">Copy</button>
+      </div>
+      4. Wait a minute for it to arrive, then come back here and buy BITS
+    </div>
+    <a href="https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00C2YSCJLT" target="_blank" rel="noopener noreferrer" id="buyBnbLink">
+      <button class="primary" type="button">Buy BNB on Binance</button>
+    </a>
+    <div class="row" style="margin-top:10px"><span class="label">You pay</span></div>
     <input id="buyBnbAmount" placeholder="BNB amount" type="number" step="any">
     <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="buyEstimate">-</span></div>
     <button class="primary" id="buyBtn">Buy BITS</button>
-    <a href="https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00C2YSCJLT" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;font-size:11px;margin-top:8px;color:#003c9c">Don't have BNB? Buy some here &rarr;</a>
   </div>
 
   <div class="panel" id="panel-send">
@@ -305,6 +318,9 @@ async function refresh() {
   const addr = await signer.getAddress();
   const bnbBal = await provider.getBalance(addr);
   document.getElementById('bnbBalance').textContent = parseFloat(ethers.formatEther(bnbBal)).toFixed(5) + " BNB";
+
+  document.getElementById('guideAddr').textContent = addr;
+  document.getElementById('noBnbGuide').style.display = bnbBal === 0n ? 'block' : 'none';
 
   const contract = new ethers.Contract(BITS_ADDRESS, ABI, provider);
   const [bal, dec, staked, nextReward] = await Promise.all([
@@ -456,6 +472,12 @@ document.getElementById('continueBtn').onclick = continueToWallet;
 document.getElementById('exportBtn').onclick = exportWallet;
 document.getElementById('closeExportBtn').onclick = closeExport;
 document.getElementById('buyBtn').onclick = buyTokens;
+document.getElementById('copyAddrBtn').onclick = () => {
+  navigator.clipboard.writeText(document.getElementById('guideAddr').textContent);
+  const btn = document.getElementById('copyAddrBtn');
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1200);
+};
 document.getElementById('buyBnbAmount').oninput = () => {
   clearTimeout(buyEstimateTimer);
   buyEstimateTimer = setTimeout(updateBuyEstimate, 400);
