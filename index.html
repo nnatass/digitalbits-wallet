@@ -126,6 +126,7 @@
 <div class="card" id="walletCard" style="display:none">
   <div class="row"><span class="label">Address</span></div>
   <div class="addr" id="addrDisplay"></div>
+  <button class="primary" id="exportBtn" style="display:none;background:transparent;border:1px solid #3a2a52;margin-top:8px">Export Wallet</button>
   <div class="row" style="margin-top:14px"><span class="label">BNB Balance</span><span class="value" id="bnbBalance">-</span></div>
 
   <div class="big-balance" id="tokenBalance">-</div>
@@ -163,6 +164,17 @@
   <div class="status" id="txStatus"></div>
 </div>
 
+<div class="card" id="exportCard" style="display:none">
+  <div class="status" style="color:#e85fd0;font-weight:600;margin-bottom:12px">⚠ Anyone with this private key or phrase can take your funds. Never share it.</div>
+  <div class="row"><span class="label">Address</span></div>
+  <div class="addr" id="exportAddr"></div>
+  <div class="row" style="margin-top:10px"><span class="label">Private Key</span></div>
+  <div class="addr" id="exportKey"></div>
+  <div class="row" style="margin-top:10px"><span class="label">Recovery Phrase</span></div>
+  <div class="addr" id="exportMnemonic"></div>
+  <button class="primary" id="closeExportBtn" style="margin-top:14px">Close</button>
+</div>
+
 <script>
 const BITS_ADDRESS = "0x1b6E1196f7a4812bf9C16e70b406e32bB0618fbD";
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
@@ -189,6 +201,7 @@ const BSC_RPC = "https://bsc-dataseed.binance.org/";
 let provider, signer;
 let pendingWallet = null;
 let buyEstimateTimer = null;
+let localWallet = null; // set only when wallet was created/imported locally (not MetaMask)
 
 async function connect() {
   if (!window.ethereum) {
@@ -212,6 +225,7 @@ function createNewWallet() {
 
 async function continueToWallet() {
   provider = new ethers.JsonRpcProvider(BSC_RPC);
+  localWallet = pendingWallet;
   signer = pendingWallet.connect(provider);
   document.getElementById('createCard').style.display = 'none';
   await enterWallet();
@@ -233,6 +247,7 @@ async function importWallet() {
     } else {
       wallet = ethers.Wallet.fromPhrase(input);
     }
+    localWallet = wallet;
     signer = wallet.connect(provider);
     document.getElementById('importCard').style.display = 'none';
     await enterWallet();
@@ -245,7 +260,22 @@ async function enterWallet() {
   const addr = await signer.getAddress();
   document.getElementById('walletCard').style.display = 'block';
   document.getElementById('addrDisplay').textContent = addr;
+  document.getElementById('exportBtn').style.display = localWallet ? 'block' : 'none';
   await refresh();
+}
+
+function exportWallet() {
+  if (!localWallet) return;
+  document.getElementById('exportAddr').textContent = localWallet.address;
+  document.getElementById('exportKey').textContent = localWallet.privateKey;
+  document.getElementById('exportMnemonic').textContent = localWallet.mnemonic ? localWallet.mnemonic.phrase : "(imported via private key — no recovery phrase available)";
+  document.getElementById('walletCard').style.display = 'none';
+  document.getElementById('exportCard').style.display = 'block';
+}
+
+function closeExport() {
+  document.getElementById('exportCard').style.display = 'none';
+  document.getElementById('walletCard').style.display = 'block';
 }
 
 async function refresh() {
@@ -392,6 +422,8 @@ document.getElementById('savedCheckbox').onchange = (e) => {
   document.getElementById('continueBtn').disabled = !e.target.checked;
 };
 document.getElementById('continueBtn').onclick = continueToWallet;
+document.getElementById('exportBtn').onclick = exportWallet;
+document.getElementById('closeExportBtn').onclick = closeExport;
 document.getElementById('buyBtn').onclick = buyTokens;
 document.getElementById('buyBnbAmount').oninput = () => {
   clearTimeout(buyEstimateTimer);
