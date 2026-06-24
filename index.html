@@ -8,87 +8,96 @@
         integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
         crossorigin="anonymous"></script>
 <style>
-  :root {
-    --purple: #8b3fd1;
-    --purple-dark: #5a1f8f;
-    --pink: #e85fd0;
-    --bg: #0e0a16;
-    --card: #1a1426;
-  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
-    background: radial-gradient(circle at 50% 0%, #2a1a40, var(--bg) 70%);
-    color: #f0eaf8;
+    font-family: Tahoma, "MS Sans Serif", Geneva, sans-serif;
+    background: #ece9d8;
+    color: #000;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 32px 16px;
+    padding: 20px 12px;
+    font-size: 12px;
   }
-  .logo {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    margin-bottom: 12px;
-    box-shadow: 0 0 40px rgba(139, 63, 209, 0.6);
-  }
-  h1 {
-    font-size: 24px;
-    margin: 0 0 4px;
-    background: linear-gradient(90deg, var(--pink), var(--purple));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .subtitle { color: #a89cc0; font-size: 13px; margin-bottom: 24px; }
-  .card {
-    background: var(--card);
-    border: 1px solid #3a2a52;
-    border-radius: 16px;
-    padding: 24px;
+  .titlebar {
     width: 100%;
     max-width: 420px;
-    margin-bottom: 16px;
+    background: linear-gradient(to bottom, #2a6fc9 0%, #1c4faa 8%, #1a4ea3 50%, #163f87 92%, #1c4faa 100%);
+    border: 1px solid #0a2a5e;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .label { color: #a89cc0; font-size: 13px; }
-  .value { font-weight: 600; font-size: 15px; }
-  .big-balance { font-size: 32px; font-weight: 700; text-align: center; margin: 8px 0; }
-  .token-select { display: flex; gap: 8px; margin-bottom: 16px; }
-  .token-select button {
-    flex: 1; padding: 8px; border-radius: 10px; border: 1px solid #3a2a52;
-    background: #241a36; color: #cbb8e8; cursor: pointer; font-size: 13px;
+  .titlebar img { width: 16px; height: 16px; border-radius: 2px; }
+  .titlebar span {
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
   }
-  .token-select button.active { background: var(--purple); color: white; border-color: var(--purple); }
+  .logo { display: none; }
+  h1, .subtitle { display: none; }
+  .card {
+    background: #ece9d8;
+    border: 1px solid #919b9c;
+    border-top: none;
+    padding: 10px;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 0 0 1px #fff;
+  }
+  .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .label { color: #000; font-size: 12px; }
+  .value { font-weight: bold; font-size: 12px; font-family: "Courier New", monospace; }
+  .big-balance {
+    font-size: 22px; font-weight: bold; text-align: center; margin: 6px 0;
+    font-family: "Courier New", monospace;
+    background: #fff;
+    border: 1px solid #7f9db9;
+    padding: 8px;
+  }
   button.primary {
-    width: 100%; padding: 14px; border-radius: 12px; border: none;
-    background: linear-gradient(90deg, var(--purple), var(--pink));
-    color: white; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 8px;
+    width: 100%; padding: 5px 10px; border: 1px solid #003c74;
+    background: linear-gradient(to bottom, #fefefe 0%, #ebebeb 45%, #dcdcdc 50%, #c4c4c4 95%, #b0b0b0 100%);
+    color: #000; font-size: 12px; cursor: pointer; margin-top: 6px;
+    border-radius: 3px;
   }
+  button.primary:hover { background: linear-gradient(to bottom, #ffffff 0%, #f3f3f3 45%, #e6e6e6 50%, #d4d4d4 95%, #c0c0c0 100%); }
+  button.primary:active { background: linear-gradient(to bottom, #c4c4c4 0%, #dcdcdc 100%); }
   button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
   input {
-    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #3a2a52;
-    background: #241a36; color: white; font-size: 14px; margin-bottom: 10px;
+    width: 100%; padding: 4px 6px; border: 1px solid #7f9db9;
+    background: #fff; color: #000; font-size: 12px; margin-bottom: 8px;
+    font-family: Tahoma, sans-serif;
   }
-  .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 2px; margin-bottom: 10px; border-bottom: 1px solid #919b9c; }
   .tabs button {
-    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #3a2a52;
-    background: transparent; color: #a89cc0; cursor: pointer; font-size: 13px;
+    flex: 1; padding: 6px; border: 1px solid #919b9c; border-bottom: none;
+    background: linear-gradient(to bottom, #f4f4f0 0%, #d6d3c4 100%);
+    color: #000; cursor: pointer; font-size: 12px; border-radius: 3px 3px 0 0;
   }
-  .tabs button.active { background: #3a2a52; color: white; }
+  .tabs button.active { background: #ece9d8; font-weight: bold; }
   .panel { display: none; }
   .panel.active { display: block; }
-  .status { font-size: 13px; color: #a89cc0; margin-top: 10px; text-align: center; min-height: 18px; }
-  .addr { font-family: monospace; font-size: 12px; color: #cbb8e8; word-break: break-all; }
+  .status { font-size: 11px; color: #000; margin-top: 8px; text-align: center; min-height: 16px; }
+  .addr {
+    font-family: "Courier New", monospace; font-size: 11px; color: #000;
+    word-break: break-all; background: #fff; border: 1px solid #7f9db9; padding: 4px;
+  }
 </style>
 </head>
 <body>
 
-<img class="logo" src="logo.png" onerror="this.style.display='none'">
-<h1>Digital Bits Wallet</h1>
-<div class="subtitle">BNB Smart Chain</div>
+<div class="titlebar">
+  <img src="logo.png" onerror="this.style.display='none'">
+  <span>Digital Bits Wallet v1.0 - BNB Smart Chain</span>
+</div>
 
 <div class="card" id="connectCard">
   <button class="primary" id="connectBtn">Connect MetaMask</button>
