@@ -103,13 +103,13 @@
 
 <div class="titlebar">
   <img src="logo.png" onerror="this.style.display='none'">
-  <span>Digital Bits Wallet v1.0 - BNB Smart Chain</span>
+  <span>AWEN Wallet v1.0 - BNB Smart Chain</span>
 </div>
 
 <div class="splash">
   <img src="logo.png" onerror="this.style.display='none'">
-  <div class="apptitle">Digital Bits</div>
-  <div class="appsub">BITS &middot; BNB Smart Chain &middot; v1.0</div>
+  <div class="apptitle">AWEN</div>
+  <div class="appsub">AWEN &amp; Digital Bits &middot; BNB Smart Chain &middot; v1.0</div>
 </div>
 
 <div class="card" id="connectCard">
@@ -151,8 +151,13 @@
   <button class="primary" id="exportBtn" style="display:none">Export Wallet</button>
   <div class="row" style="margin-top:14px"><span class="label">BNB Balance</span><span class="value" id="bnbBalance">-</span></div>
 
+  <div class="tabs" style="margin-top:10px">
+    <button class="active" data-coin="AWEN">AWEN</button>
+    <button data-coin="BITS">Digital Bits</button>
+  </div>
+
   <div class="big-balance" id="tokenBalance">-</div>
-  <div class="status" id="tokenName" style="text-align:center;margin-bottom:16px">Digital Bits</div>
+  <div class="status" id="tokenName" style="text-align:center;margin-bottom:16px">AWEN</div>
 
   <div class="tabs">
     <button class="active" data-tab="buy">Buy</button>
@@ -220,7 +225,12 @@
 </div>
 
 <script>
-const BITS_ADDRESS = "0x1b6E1196f7a4812bf9C16e70b406e32bB0618fbD";
+const TOKEN_ADDRESSES = {
+  AWEN: "0xE9C17EDe6C5E7AE3EE3b839F71Bf0156d99C6166",
+  BITS: "0x1b6E1196f7a4812bf9C16e70b406e32bB0618fbD"
+};
+let currentCoin = "AWEN";
+function BITS_ADDRESS_FN() { return TOKEN_ADDRESSES[currentCoin]; }
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 
 const ABI = [
@@ -332,8 +342,11 @@ async function refresh() {
 
   document.getElementById('guideAddr').textContent = addr;
   document.getElementById('noBnbGuide').style.display = bnbBal === 0n ? 'block' : 'none';
+  document.getElementById('tokenName').textContent = currentCoin === 'AWEN' ? 'AWEN' : 'Digital Bits';
+  document.getElementById('buyBtn').textContent = 'Buy ' + currentCoin;
+  document.getElementById('sellBtn').textContent = 'Sell ' + currentCoin;
 
-  const contract = new ethers.Contract(BITS_ADDRESS, ABI, provider);
+  const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, provider);
   const [bal, dec, staked, nextReward] = await Promise.all([
     contract.balanceOf(addr),
     contract.decimals(),
@@ -365,8 +378,8 @@ async function updateBuyEstimate() {
   try {
     const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
     const weth = await router.WETH();
-    const amounts = await router.getAmountsOut(ethers.parseEther(amount), [weth, BITS_ADDRESS]);
-    const contract = new ethers.Contract(BITS_ADDRESS, ABI, provider);
+    const amounts = await router.getAmountsOut(ethers.parseEther(amount), [weth, BITS_ADDRESS_FN()]);
+    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, provider);
     const dec = await contract.decimals();
     estimateEl.textContent = parseFloat(ethers.formatUnits(amounts[1], dec)).toLocaleString() + " BITS";
   } catch (e) {
@@ -394,13 +407,13 @@ async function buyTokens() {
       return;
     }
 
-    const amounts = await router.getAmountsOut(amountIn, [weth, BITS_ADDRESS]);
+    const amounts = await router.getAmountsOut(amountIn, [weth, BITS_ADDRESS_FN()]);
     const minOut = (amounts[1] * 95n) / 100n; // 5% slippage tolerance
     const deadline = Math.floor(Date.now() / 1000) + 600;
     const addr = await signer.getAddress();
 
     status.textContent = "Confirm transaction...";
-    const tx = await router.swapExactETHForTokens(minOut, [weth, BITS_ADDRESS], addr, deadline, { value: amountIn });
+    const tx = await router.swapExactETHForTokens(minOut, [weth, BITS_ADDRESS_FN()], addr, deadline, { value: amountIn });
     status.textContent = "Buying...";
     await tx.wait();
     status.textContent = "Bought!";
@@ -422,9 +435,9 @@ async function updateSellEstimate() {
   try {
     const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
     const weth = await router.WETH();
-    const contract = new ethers.Contract(BITS_ADDRESS, ABI, provider);
+    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, provider);
     const dec = await contract.decimals();
-    const amounts = await router.getAmountsOut(ethers.parseUnits(amount, dec), [BITS_ADDRESS, weth]);
+    const amounts = await router.getAmountsOut(ethers.parseUnits(amount, dec), [BITS_ADDRESS_FN(), weth]);
     estimateEl.textContent = parseFloat(ethers.formatEther(amounts[1])).toFixed(6) + " BNB";
   } catch (e) {
     estimateEl.textContent = "No liquidity / error";
@@ -439,7 +452,7 @@ async function sellTokens() {
     return;
   }
   try {
-    const token = new ethers.Contract(BITS_ADDRESS, ABI, signer);
+    const token = new ethers.Contract(BITS_ADDRESS_FN(), ABI, signer);
     const dec = await token.decimals();
     const amountIn = ethers.parseUnits(amount, dec);
     const addr = await signer.getAddress();
@@ -460,12 +473,12 @@ async function sellTokens() {
     status.textContent = "Fetching quote...";
     const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, signer);
     const weth = await router.WETH();
-    const amounts = await router.getAmountsOut(amountIn, [BITS_ADDRESS, weth]);
+    const amounts = await router.getAmountsOut(amountIn, [BITS_ADDRESS_FN(), weth]);
     const minOut = (amounts[1] * 95n) / 100n; // 5% slippage tolerance
     const deadline = Math.floor(Date.now() / 1000) + 600;
 
     status.textContent = "Confirm transaction...";
-    const tx = await router.swapExactTokensForETH(amountIn, minOut, [BITS_ADDRESS, weth], addr, deadline);
+    const tx = await router.swapExactTokensForETH(amountIn, minOut, [BITS_ADDRESS_FN(), weth], addr, deadline);
     status.textContent = "Selling...";
     await tx.wait();
     status.textContent = "Sold!";
@@ -491,7 +504,7 @@ async function sendTokens() {
   }
   try {
     status.textContent = "Confirm transaction...";
-    const contract = new ethers.Contract(BITS_ADDRESS, ABI, signer);
+    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, signer);
     const dec = await contract.decimals();
     const tx = await contract.transfer(to, ethers.parseUnits(amount, dec));
     status.textContent = "Sending...";
@@ -517,7 +530,7 @@ async function contractAction(method, amount) {
   const status = document.getElementById('txStatus');
   try {
     status.textContent = "Confirm transaction...";
-    const contract = new ethers.Contract(BITS_ADDRESS, ABI, signer);
+    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, signer);
     let tx;
     if (amount !== null) {
       const dec = await contract.decimals();
@@ -568,12 +581,23 @@ document.getElementById('stakeBtn').onclick = stakeTokens;
 document.getElementById('unstakeBtn').onclick = unstakeTokens;
 document.getElementById('claimBtn').onclick = claimReward;
 
-document.querySelectorAll('.tabs button').forEach(btn => {
+document.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
   btn.onclick = () => {
-    document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tabs button[data-tab]').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  };
+});
+
+document.querySelectorAll('.tabs button[data-coin]').forEach(btn => {
+  btn.onclick = async () => {
+    document.querySelectorAll('.tabs button[data-coin]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCoin = btn.dataset.coin;
+    document.getElementById('buyEstimate').textContent = '-';
+    document.getElementById('sellEstimate').textContent = '-';
+    await refresh();
   };
 });
 </script>
