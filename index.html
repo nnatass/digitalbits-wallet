@@ -402,13 +402,73 @@ async function sendTokens() {
 }
 
 async function stakeTokens() {
-  await contractAction('stake', document.getElementById('stakeAmount').value);
+  const amount = document.getElementById('stakeAmount').value;
+  const status = document.getElementById('txStatus');
+  if (!amount || Number(amount) <= 0) {
+    status.textContent = "Enter a valid amount to stake.";
+    return;
+  }
+  try {
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
+    const addr = await signer.getAddress();
+    const dec = await contract.decimals();
+    const amountIn = ethers.parseUnits(amount, dec);
+    const bal = await contract.balanceOf(addr);
+    if (bal < amountIn) {
+      status.textContent = `Not enough AWEN. You have ${parseFloat(ethers.formatUnits(bal, dec)).toLocaleString()}.`;
+      return;
+    }
+    await contractAction('stake', amount);
+  } catch (e) {
+    status.textContent = "Error: " + (e.shortMessage || e.message);
+  }
 }
+
 async function unstakeTokens() {
-  await contractAction('unstake', document.getElementById('unstakeAmount').value);
+  const amount = document.getElementById('unstakeAmount').value;
+  const status = document.getElementById('txStatus');
+  if (!amount || Number(amount) <= 0) {
+    status.textContent = "Enter a valid amount to unstake.";
+    return;
+  }
+  try {
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
+    const addr = await signer.getAddress();
+    const dec = await contract.decimals();
+    const amountIn = ethers.parseUnits(amount, dec);
+    const staked = await contract.stakedBalance(addr);
+    if (staked < amountIn) {
+      status.textContent = `Not enough staked AWEN. You have ${parseFloat(ethers.formatUnits(staked, dec)).toLocaleString()} staked.`;
+      return;
+    }
+    await contractAction('unstake', amount);
+  } catch (e) {
+    status.textContent = "Error: " + (e.shortMessage || e.message);
+  }
 }
+
 async function claimReward() {
-  await contractAction('claimReward', null);
+  const status = document.getElementById('txStatus');
+  try {
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
+    const addr = await signer.getAddress();
+    const dec = await contract.decimals();
+    const staked = await contract.stakedBalance(addr);
+    const minStake = ethers.parseUnits("100", dec);
+    if (staked <= minStake) {
+      status.textContent = "You need to stake more than 100 AWEN to earn rewards.";
+      return;
+    }
+    const secs = await contract.timeUntilNextReward(addr);
+    if (secs > 0n) {
+      const days = Math.floor(Number(secs) / 86400);
+      status.textContent = `Reward not ready yet. ${days} day(s) left.`;
+      return;
+    }
+    await contractAction('claimReward', null);
+  } catch (e) {
+    status.textContent = "Error: " + (e.shortMessage || e.message);
+  }
 }
 
 async function contractAction(method, amount) {
