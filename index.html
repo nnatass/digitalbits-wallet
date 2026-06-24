@@ -40,6 +40,13 @@
     font-size: 12px;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
   }
+  .splash {
+    width: 100%; max-width: 420px; background: #fff; border: 1px solid #919b9c;
+    border-top: none; border-bottom: 1px solid #b0b0b0; padding: 16px; text-align: center;
+  }
+  .splash img { width: 110px; height: 110px; border-radius: 50%; box-shadow: 0 0 0 3px #c4c4c4, 0 0 0 4px #7f9db9; }
+  .splash .apptitle { font-size: 20px; font-weight: bold; margin-top: 8px; font-family: Tahoma, sans-serif; }
+  .splash .appsub { font-size: 11px; color: #555; }
   .logo { display: none; }
   h1, .subtitle { display: none; }
   .card {
@@ -99,22 +106,28 @@
   <span>Digital Bits Wallet v1.0 - BNB Smart Chain</span>
 </div>
 
+<div class="splash">
+  <img src="logo.png" onerror="this.style.display='none'">
+  <div class="apptitle">Digital Bits</div>
+  <div class="appsub">BITS &middot; BNB Smart Chain &middot; v1.0</div>
+</div>
+
 <div class="card" id="connectCard">
   <button class="primary" id="connectBtn">Connect MetaMask</button>
-  <button class="primary" id="createBtn" style="background:linear-gradient(90deg,#3a2a52,#5a1f8f)">Create New Wallet</button>
-  <button class="primary" id="importBtn" style="background:transparent;border:1px solid #3a2a52">Import Existing Wallet</button>
+  <button class="primary" id="createBtn">Create New Wallet</button>
+  <button class="primary" id="importBtn">Import Existing Wallet</button>
   <div class="status" id="connectStatus"></div>
 </div>
 
 <div class="card" id="createCard" style="display:none">
-  <div class="status" style="color:#e85fd0;font-weight:600;margin-bottom:12px">⚠ Save these now. If you lose them, your funds are gone forever. Never share them with anyone.</div>
+  <div class="status" style="color:#a00;font-weight:bold;margin-bottom:12px">⚠ Save these now. If you lose them, your funds are gone forever. Never share them with anyone.</div>
   <div class="row"><span class="label">Address</span></div>
   <div class="addr" id="newAddr"></div>
   <div class="row" style="margin-top:10px"><span class="label">Private Key</span></div>
   <div class="addr" id="newKey"></div>
   <div class="row" style="margin-top:10px"><span class="label">Recovery Phrase</span></div>
   <div class="addr" id="newMnemonic"></div>
-  <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:#cbb8e8">
+  <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:#000">
     <input type="checkbox" id="savedCheckbox" style="width:auto;margin:0">
     I have saved my private key / recovery phrase somewhere safe
   </label>
@@ -122,9 +135,9 @@
 </div>
 
 <div class="card" id="importCard" style="display:none">
-  <div class="status" style="color:#e85fd0;margin-bottom:10px">This runs entirely in your browser — your key is never sent anywhere. Still, only do this on a device you trust.</div>
+  <div class="status" style="color:#a00;margin-bottom:10px">This runs entirely in your browser — your key is never sent anywhere. Still, only do this on a device you trust.</div>
   <input id="importInput" type="password" placeholder="Paste private key (0x...) or 12-word recovery phrase">
-  <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:#cbb8e8">
+  <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:#000">
     <input type="checkbox" id="showImportInput" style="width:auto;margin:0">
     Show
   </label>
@@ -135,7 +148,7 @@
 <div class="card" id="walletCard" style="display:none">
   <div class="row"><span class="label">Address</span></div>
   <div class="addr" id="addrDisplay"></div>
-  <button class="primary" id="exportBtn" style="display:none;background:transparent;border:1px solid #3a2a52;margin-top:8px">Export Wallet</button>
+  <button class="primary" id="exportBtn" style="display:none">Export Wallet</button>
   <div class="row" style="margin-top:14px"><span class="label">BNB Balance</span><span class="value" id="bnbBalance">-</span></div>
 
   <div class="big-balance" id="tokenBalance">-</div>
@@ -174,7 +187,7 @@
 </div>
 
 <div class="card" id="exportCard" style="display:none">
-  <div class="status" style="color:#e85fd0;font-weight:600;margin-bottom:12px">⚠ Anyone with this private key or phrase can take your funds. Never share it.</div>
+  <div class="status" style="color:#a00;font-weight:bold;margin-bottom:12px">⚠ Anyone with this private key or phrase can take your funds. Never share it.</div>
   <div class="row"><span class="label">Address</span></div>
   <div class="addr" id="exportAddr"></div>
   <div class="row" style="margin-top:10px"><span class="label">Private Key</span></div>
@@ -345,6 +358,14 @@ async function buyTokens() {
     const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, signer);
     const weth = await router.WETH();
     const amountIn = ethers.parseEther(amount);
+
+    const addrForCheck = await signer.getAddress();
+    const bnbBal = await provider.getBalance(addrForCheck);
+    if (bnbBal < amountIn) {
+      status.textContent = `Not enough BNB. You have ${parseFloat(ethers.formatEther(bnbBal)).toFixed(5)} BNB but need ${amount}.`;
+      return;
+    }
+
     const amounts = await router.getAmountsOut(amountIn, [weth, BITS_ADDRESS]);
     const minOut = (amounts[1] * 95n) / 100n; // 5% slippage tolerance
     const deadline = Math.floor(Date.now() / 1000) + 600;
