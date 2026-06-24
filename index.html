@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Digital Bits Wallet</title>
+<title>AWEN Wallet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"
         integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
@@ -47,8 +47,6 @@
   .splash img { width: 110px; height: 110px; border-radius: 50%; box-shadow: 0 0 0 3px #c4c4c4, 0 0 0 4px #7f9db9; }
   .splash .apptitle { font-size: 20px; font-weight: bold; margin-top: 8px; font-family: Tahoma, sans-serif; }
   .splash .appsub { font-size: 11px; color: #555; }
-  .logo { display: none; }
-  h1, .subtitle { display: none; }
   .card {
     background: #ece9d8;
     border: 1px solid #919b9c;
@@ -109,52 +107,18 @@
 <div class="splash">
   <img src="logo.png" onerror="this.style.display='none'">
   <div class="apptitle">AWEN</div>
-  <div class="appsub">AWEN &amp; Digital Bits &middot; BNB Smart Chain &middot; v1.0</div>
+  <div class="appsub">BNB Smart Chain &middot; v1.0</div>
 </div>
 
 <div class="card" id="connectCard">
   <button class="primary" id="connectBtn">Connect MetaMask</button>
-  <button class="primary" id="createBtn">Create New Wallet</button>
-  <button class="primary" id="importBtn">Import Existing Wallet</button>
   <div class="status" id="connectStatus"></div>
-</div>
-
-<div class="card" id="createCard" style="display:none">
-  <div class="status" style="color:#a00;font-weight:bold;margin-bottom:12px">⚠ Save these now. If you lose them, your funds are gone forever. Never share them with anyone.</div>
-  <div class="row"><span class="label">Address</span></div>
-  <div class="addr" id="newAddr"></div>
-  <div class="row" style="margin-top:10px"><span class="label">Private Key</span></div>
-  <div class="addr" id="newKey"></div>
-  <div class="row" style="margin-top:10px"><span class="label">Recovery Phrase</span></div>
-  <div class="addr" id="newMnemonic"></div>
-  <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:#000">
-    <input type="checkbox" id="savedCheckbox" style="width:auto;margin:0">
-    I have saved my private key / recovery phrase somewhere safe
-  </label>
-  <button class="primary" id="continueBtn" disabled>Continue to Wallet</button>
-</div>
-
-<div class="card" id="importCard" style="display:none">
-  <div class="status" style="color:#a00;margin-bottom:10px">This runs entirely in your browser — your key is never sent anywhere. Still, only do this on a device you trust.</div>
-  <input id="importInput" type="password" placeholder="Paste private key (0x...) or 12-word recovery phrase">
-  <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:#000">
-    <input type="checkbox" id="showImportInput" style="width:auto;margin:0">
-    Show
-  </label>
-  <button class="primary" id="importSubmitBtn">Import</button>
-  <div class="status" id="importStatus"></div>
 </div>
 
 <div class="card" id="walletCard" style="display:none">
   <div class="row"><span class="label">Address</span></div>
   <div class="addr" id="addrDisplay"></div>
-  <button class="primary" id="exportBtn" style="display:none">Export Wallet</button>
   <div class="row" style="margin-top:14px"><span class="label">BNB Balance</span><span class="value" id="bnbBalance">-</span></div>
-
-  <div class="tabs" style="margin-top:10px">
-    <button class="active" data-coin="AWEN">AWEN</button>
-    <button data-coin="BITS">Digital Bits</button>
-  </div>
 
   <div class="big-balance" id="tokenBalance">-</div>
   <div class="status" id="tokenName" style="text-align:center;margin-bottom:16px">AWEN</div>
@@ -176,7 +140,7 @@
         <div class="addr" id="guideAddr" style="flex:1;margin:0"></div>
         <button class="primary" id="copyAddrBtn" style="width:auto;margin:0;padding:4px 8px">Copy</button>
       </div>
-      4. Wait a minute for it to arrive, then come back here and buy BITS
+      4. Wait a minute for it to arrive, then come back here and buy AWEN
     </div>
     <a href="https://www.binance.com/activity/referral-entry/CPA?ref=CPA_00C2YSCJLT" target="_blank" rel="noopener noreferrer" id="buyBnbLink">
       <button class="primary" type="button">Buy BNB on Binance</button>
@@ -184,14 +148,14 @@
     <div class="row" style="margin-top:10px"><span class="label">You pay</span></div>
     <input id="buyBnbAmount" placeholder="BNB amount" type="number" step="any">
     <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="buyEstimate">-</span></div>
-    <button class="primary" id="buyBtn">Buy BITS</button>
+    <button class="primary" id="buyBtn">Buy AWEN</button>
   </div>
 
   <div class="panel" id="panel-sell">
     <div class="row"><span class="label">You sell</span></div>
-    <input id="sellBitsAmount" placeholder="BITS amount" type="number" step="any">
+    <input id="sellBitsAmount" placeholder="AWEN amount" type="number" step="any">
     <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="sellEstimate">-</span></div>
-    <button class="primary" id="sellBtn">Sell BITS</button>
+    <button class="primary" id="sellBtn">Sell AWEN</button>
   </div>
 
   <div class="panel" id="panel-send">
@@ -213,24 +177,8 @@
   <div class="status" id="txStatus"></div>
 </div>
 
-<div class="card" id="exportCard" style="display:none">
-  <div class="status" style="color:#a00;font-weight:bold;margin-bottom:12px">⚠ Anyone with this private key or phrase can take your funds. Never share it.</div>
-  <div class="row"><span class="label">Address</span></div>
-  <div class="addr" id="exportAddr"></div>
-  <div class="row" style="margin-top:10px"><span class="label">Private Key</span></div>
-  <div class="addr" id="exportKey"></div>
-  <div class="row" style="margin-top:10px"><span class="label">Recovery Phrase</span></div>
-  <div class="addr" id="exportMnemonic"></div>
-  <button class="primary" id="closeExportBtn" style="margin-top:14px">Close</button>
-</div>
-
 <script>
-const TOKEN_ADDRESSES = {
-  AWEN: "0xE9C17EDe6C5E7AE3EE3b839F71Bf0156d99C6166",
-  BITS: "0x1b6E1196f7a4812bf9C16e70b406e32bB0618fbD"
-};
-let currentCoin = "AWEN";
-function BITS_ADDRESS_FN() { return TOKEN_ADDRESSES[currentCoin]; }
+const AWEN_ADDRESS = "0xE9C17EDe6C5E7AE3EE3b839F71Bf0156d99C6166";
 const PANCAKE_ROUTER = "0x10ED43C718714eb63d5aA57B78B54704E256024E";
 
 const ABI = [
@@ -254,15 +202,11 @@ const ROUTER_ABI = [
   "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)"
 ];
 
-const BSC_RPC = "https://bsc-dataseed.binance.org/";
 let provider, signer;
-let pendingWallet = null;
-let buyEstimateTimer = null;
-let localWallet = null; // set only when wallet was created/imported locally (not MetaMask)
 
 async function connect() {
   if (!window.ethereum) {
-    document.getElementById('connectStatus').textContent = "MetaMask not found. Try 'Create New Wallet' or 'Import Existing Wallet' instead.";
+    document.getElementById('connectStatus').textContent = "MetaMask not found. Please install the MetaMask browser extension to use this wallet.";
     return;
   }
   provider = new ethers.BrowserProvider(window.ethereum);
@@ -271,68 +215,11 @@ async function connect() {
   await enterWallet();
 }
 
-function createNewWallet() {
-  pendingWallet = ethers.Wallet.createRandom();
-  document.getElementById('newAddr').textContent = pendingWallet.address;
-  document.getElementById('newKey').textContent = pendingWallet.privateKey;
-  document.getElementById('newMnemonic').textContent = pendingWallet.mnemonic.phrase;
-  document.getElementById('connectCard').style.display = 'none';
-  document.getElementById('createCard').style.display = 'block';
-}
-
-async function continueToWallet() {
-  provider = new ethers.JsonRpcProvider(BSC_RPC);
-  localWallet = pendingWallet;
-  signer = pendingWallet.connect(provider);
-  document.getElementById('createCard').style.display = 'none';
-  await enterWallet();
-}
-
-function showImportCard() {
-  document.getElementById('connectCard').style.display = 'none';
-  document.getElementById('importCard').style.display = 'block';
-}
-
-async function importWallet() {
-  const input = document.getElementById('importInput').value.trim();
-  const status = document.getElementById('importStatus');
-  try {
-    provider = new ethers.JsonRpcProvider(BSC_RPC);
-    let wallet;
-    if (input.startsWith('0x') && input.length === 66) {
-      wallet = new ethers.Wallet(input);
-    } else {
-      wallet = ethers.Wallet.fromPhrase(input);
-    }
-    localWallet = wallet;
-    signer = wallet.connect(provider);
-    document.getElementById('importCard').style.display = 'none';
-    await enterWallet();
-  } catch (e) {
-    status.textContent = "Invalid private key or recovery phrase.";
-  }
-}
-
 async function enterWallet() {
   const addr = await signer.getAddress();
   document.getElementById('walletCard').style.display = 'block';
   document.getElementById('addrDisplay').textContent = addr;
-  document.getElementById('exportBtn').style.display = localWallet ? 'block' : 'none';
   await refresh();
-}
-
-function exportWallet() {
-  if (!localWallet) return;
-  document.getElementById('exportAddr').textContent = localWallet.address;
-  document.getElementById('exportKey').textContent = localWallet.privateKey;
-  document.getElementById('exportMnemonic').textContent = localWallet.mnemonic ? localWallet.mnemonic.phrase : "(imported via private key — no recovery phrase available)";
-  document.getElementById('walletCard').style.display = 'none';
-  document.getElementById('exportCard').style.display = 'block';
-}
-
-function closeExport() {
-  document.getElementById('exportCard').style.display = 'none';
-  document.getElementById('walletCard').style.display = 'block';
 }
 
 async function refresh() {
@@ -342,11 +229,8 @@ async function refresh() {
 
   document.getElementById('guideAddr').textContent = addr;
   document.getElementById('noBnbGuide').style.display = bnbBal === 0n ? 'block' : 'none';
-  document.getElementById('tokenName').textContent = currentCoin === 'AWEN' ? 'AWEN' : 'Digital Bits';
-  document.getElementById('buyBtn').textContent = 'Buy ' + currentCoin;
-  document.getElementById('sellBtn').textContent = 'Sell ' + currentCoin;
 
-  const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, provider);
+  const contract = new ethers.Contract(AWEN_ADDRESS, ABI, provider);
   const [bal, dec, staked, nextReward] = await Promise.all([
     contract.balanceOf(addr),
     contract.decimals(),
@@ -378,10 +262,10 @@ async function updateBuyEstimate() {
   try {
     const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
     const weth = await router.WETH();
-    const amounts = await router.getAmountsOut(ethers.parseEther(amount), [weth, BITS_ADDRESS_FN()]);
-    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, provider);
+    const amounts = await router.getAmountsOut(ethers.parseEther(amount), [weth, AWEN_ADDRESS]);
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, provider);
     const dec = await contract.decimals();
-    estimateEl.textContent = parseFloat(ethers.formatUnits(amounts[1], dec)).toLocaleString() + " BITS";
+    estimateEl.textContent = parseFloat(ethers.formatUnits(amounts[1], dec)).toLocaleString() + " AWEN";
   } catch (e) {
     estimateEl.textContent = "No liquidity / error";
   }
@@ -407,13 +291,13 @@ async function buyTokens() {
       return;
     }
 
-    const amounts = await router.getAmountsOut(amountIn, [weth, BITS_ADDRESS_FN()]);
+    const amounts = await router.getAmountsOut(amountIn, [weth, AWEN_ADDRESS]);
     const minOut = (amounts[1] * 95n) / 100n; // 5% slippage tolerance
     const deadline = Math.floor(Date.now() / 1000) + 600;
     const addr = await signer.getAddress();
 
     status.textContent = "Confirm transaction...";
-    const tx = await router.swapExactETHForTokens(minOut, [weth, BITS_ADDRESS_FN()], addr, deadline, { value: amountIn });
+    const tx = await router.swapExactETHForTokens(minOut, [weth, AWEN_ADDRESS], addr, deadline, { value: amountIn });
     status.textContent = "Buying...";
     await tx.wait();
     status.textContent = "Bought!";
@@ -435,9 +319,9 @@ async function updateSellEstimate() {
   try {
     const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
     const weth = await router.WETH();
-    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, provider);
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, provider);
     const dec = await contract.decimals();
-    const amounts = await router.getAmountsOut(ethers.parseUnits(amount, dec), [BITS_ADDRESS_FN(), weth]);
+    const amounts = await router.getAmountsOut(ethers.parseUnits(amount, dec), [AWEN_ADDRESS, weth]);
     estimateEl.textContent = parseFloat(ethers.formatEther(amounts[1])).toFixed(6) + " BNB";
   } catch (e) {
     estimateEl.textContent = "No liquidity / error";
@@ -448,24 +332,24 @@ async function sellTokens() {
   const amount = document.getElementById('sellBitsAmount').value;
   const status = document.getElementById('txStatus');
   if (!amount || Number(amount) <= 0) {
-    status.textContent = "Enter a valid BITS amount.";
+    status.textContent = "Enter a valid AWEN amount.";
     return;
   }
   try {
-    const token = new ethers.Contract(BITS_ADDRESS_FN(), ABI, signer);
+    const token = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
     const dec = await token.decimals();
     const amountIn = ethers.parseUnits(amount, dec);
     const addr = await signer.getAddress();
 
     const bal = await token.balanceOf(addr);
     if (bal < amountIn) {
-      status.textContent = `Not enough BITS. You have ${parseFloat(ethers.formatUnits(bal, dec)).toLocaleString()}.`;
+      status.textContent = `Not enough AWEN. You have ${parseFloat(ethers.formatUnits(bal, dec)).toLocaleString()}.`;
       return;
     }
 
     const allowance = await token.allowance(addr, PANCAKE_ROUTER);
     if (allowance < amountIn) {
-      status.textContent = "Approving BITS for trading...";
+      status.textContent = "Approving AWEN for trading...";
       const approveTx = await token.approve(PANCAKE_ROUTER, amountIn);
       await approveTx.wait();
     }
@@ -473,12 +357,12 @@ async function sellTokens() {
     status.textContent = "Fetching quote...";
     const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, signer);
     const weth = await router.WETH();
-    const amounts = await router.getAmountsOut(amountIn, [BITS_ADDRESS_FN(), weth]);
+    const amounts = await router.getAmountsOut(amountIn, [AWEN_ADDRESS, weth]);
     const minOut = (amounts[1] * 95n) / 100n; // 5% slippage tolerance
     const deadline = Math.floor(Date.now() / 1000) + 600;
 
     status.textContent = "Confirm transaction...";
-    const tx = await router.swapExactTokensForETH(amountIn, minOut, [BITS_ADDRESS_FN(), weth], addr, deadline);
+    const tx = await router.swapExactTokensForETH(amountIn, minOut, [AWEN_ADDRESS, weth], addr, deadline);
     status.textContent = "Selling...";
     await tx.wait();
     status.textContent = "Sold!";
@@ -504,7 +388,7 @@ async function sendTokens() {
   }
   try {
     status.textContent = "Confirm transaction...";
-    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, signer);
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
     const dec = await contract.decimals();
     const tx = await contract.transfer(to, ethers.parseUnits(amount, dec));
     status.textContent = "Sending...";
@@ -530,7 +414,7 @@ async function contractAction(method, amount) {
   const status = document.getElementById('txStatus');
   try {
     status.textContent = "Confirm transaction...";
-    const contract = new ethers.Contract(BITS_ADDRESS_FN(), ABI, signer);
+    const contract = new ethers.Contract(AWEN_ADDRESS, ABI, signer);
     let tx;
     if (amount !== null) {
       const dec = await contract.decimals();
@@ -548,18 +432,6 @@ async function contractAction(method, amount) {
 }
 
 document.getElementById('connectBtn').onclick = connect;
-document.getElementById('createBtn').onclick = createNewWallet;
-document.getElementById('importBtn').onclick = showImportCard;
-document.getElementById('importSubmitBtn').onclick = importWallet;
-document.getElementById('showImportInput').onchange = (e) => {
-  document.getElementById('importInput').type = e.target.checked ? 'text' : 'password';
-};
-document.getElementById('savedCheckbox').onchange = (e) => {
-  document.getElementById('continueBtn').disabled = !e.target.checked;
-};
-document.getElementById('continueBtn').onclick = continueToWallet;
-document.getElementById('exportBtn').onclick = exportWallet;
-document.getElementById('closeExportBtn').onclick = closeExport;
 document.getElementById('buyBtn').onclick = buyTokens;
 document.getElementById('copyAddrBtn').onclick = () => {
   navigator.clipboard.writeText(document.getElementById('guideAddr').textContent);
@@ -568,13 +440,13 @@ document.getElementById('copyAddrBtn').onclick = () => {
   setTimeout(() => btn.textContent = 'Copy', 1200);
 };
 document.getElementById('buyBnbAmount').oninput = () => {
-  clearTimeout(buyEstimateTimer);
-  buyEstimateTimer = setTimeout(updateBuyEstimate, 400);
+  clearTimeout(window._estTimer);
+  window._estTimer = setTimeout(updateBuyEstimate, 400);
 };
 document.getElementById('sellBtn').onclick = sellTokens;
 document.getElementById('sellBitsAmount').oninput = () => {
-  clearTimeout(buyEstimateTimer);
-  buyEstimateTimer = setTimeout(updateSellEstimate, 400);
+  clearTimeout(window._estTimer);
+  window._estTimer = setTimeout(updateSellEstimate, 400);
 };
 document.getElementById('sendBtn').onclick = sendTokens;
 document.getElementById('stakeBtn').onclick = stakeTokens;
@@ -587,17 +459,6 @@ document.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-  };
-});
-
-document.querySelectorAll('.tabs button[data-coin]').forEach(btn => {
-  btn.onclick = async () => {
-    document.querySelectorAll('.tabs button[data-coin]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentCoin = btn.dataset.coin;
-    document.getElementById('buyEstimate').textContent = '-';
-    document.getElementById('sellEstimate').textContent = '-';
-    await refresh();
   };
 });
 </script>
