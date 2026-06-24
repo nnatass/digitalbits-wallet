@@ -156,6 +156,7 @@
 
   <div class="tabs">
     <button class="active" data-tab="buy">Buy</button>
+    <button data-tab="sell">Sell</button>
     <button data-tab="send">Send</button>
     <button data-tab="stake">Stake</button>
   </div>
@@ -179,6 +180,13 @@
     <input id="buyBnbAmount" placeholder="BNB amount" type="number" step="any">
     <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="buyEstimate">-</span></div>
     <button class="primary" id="buyBtn">Buy BITS</button>
+  </div>
+
+  <div class="panel" id="panel-sell">
+    <div class="row"><span class="label">You sell</span></div>
+    <input id="sellBitsAmount" placeholder="BITS amount" type="number" step="any">
+    <div class="row"><span class="label">You receive (estimated)</span><span class="value" id="sellEstimate">-</span></div>
+    <button class="primary" id="sellBtn">Sell BITS</button>
   </div>
 
   <div class="panel" id="panel-send">
@@ -220,6 +228,8 @@ const ABI = [
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)",
   "function transfer(address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
   "function stake(uint256 amount)",
   "function unstake(uint256 amount)",
   "function claimReward()",
@@ -230,7 +240,8 @@ const ABI = [
 const ROUTER_ABI = [
   "function WETH() view returns (address)",
   "function getAmountsOut(uint amountIn, address[] path) view returns (uint[] memory)",
-  "function swapExactETHForTokens(uint amountOutMin, address[] path, address to, uint deadline) payable returns (uint[] memory)"
+  "function swapExactETHForTokens(uint amountOutMin, address[] path, address to, uint deadline) payable returns (uint[] memory)",
+  "function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) returns (uint[] memory)"
 ];
 
 const BSC_RPC = "https://bsc-dataseed.binance.org/";
@@ -401,6 +412,71 @@ async function buyTokens() {
   }
 }
 
+async function updateSellEstimate() {
+  const amount = document.getElementById('sellBitsAmount').value;
+  const estimateEl = document.getElementById('sellEstimate');
+  if (!amount || Number(amount) <= 0) {
+    estimateEl.textContent = "-";
+    return;
+  }
+  try {
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, provider);
+    const weth = await router.WETH();
+    const contract = new ethers.Contract(BITS_ADDRESS, ABI, provider);
+    const dec = await contract.decimals();
+    const amounts = await router.getAmountsOut(ethers.parseUnits(amount, dec), [BITS_ADDRESS, weth]);
+    estimateEl.textContent = parseFloat(ethers.formatEther(amounts[1])).toFixed(6) + " BNB";
+  } catch (e) {
+    estimateEl.textContent = "No liquidity / error";
+  }
+}
+
+async function sellTokens() {
+  const amount = document.getElementById('sellBitsAmount').value;
+  const status = document.getElementById('txStatus');
+  if (!amount || Number(amount) <= 0) {
+    status.textContent = "Enter a valid BITS amount.";
+    return;
+  }
+  try {
+    const token = new ethers.Contract(BITS_ADDRESS, ABI, signer);
+    const dec = await token.decimals();
+    const amountIn = ethers.parseUnits(amount, dec);
+    const addr = await signer.getAddress();
+
+    const bal = await token.balanceOf(addr);
+    if (bal < amountIn) {
+      status.textContent = `Not enough BITS. You have ${parseFloat(ethers.formatUnits(bal, dec)).toLocaleString()}.`;
+      return;
+    }
+
+    const allowance = await token.allowance(addr, PANCAKE_ROUTER);
+    if (allowance < amountIn) {
+      status.textContent = "Approving BITS for trading...";
+      const approveTx = await token.approve(PANCAKE_ROUTER, amountIn);
+      await approveTx.wait();
+    }
+
+    status.textContent = "Fetching quote...";
+    const router = new ethers.Contract(PANCAKE_ROUTER, ROUTER_ABI, signer);
+    const weth = await router.WETH();
+    const amounts = await router.getAmountsOut(amountIn, [BITS_ADDRESS, weth]);
+    const minOut = (amounts[1] * 95n) / 100n; // 5% slippage tolerance
+    const deadline = Math.floor(Date.now() / 1000) + 600;
+
+    status.textContent = "Confirm transaction...";
+    const tx = await router.swapExactTokensForETH(amountIn, minOut, [BITS_ADDRESS, weth], addr, deadline);
+    status.textContent = "Selling...";
+    await tx.wait();
+    status.textContent = "Sold!";
+    document.getElementById('sellBitsAmount').value = '';
+    document.getElementById('sellEstimate').textContent = '-';
+    await refresh();
+  } catch (e) {
+    status.textContent = "Error: " + (e.shortMessage || e.message);
+  }
+}
+
 async function sendTokens() {
   const to = document.getElementById('sendTo').value.trim();
   const amount = document.getElementById('sendAmount').value;
@@ -481,6 +557,11 @@ document.getElementById('copyAddrBtn').onclick = () => {
 document.getElementById('buyBnbAmount').oninput = () => {
   clearTimeout(buyEstimateTimer);
   buyEstimateTimer = setTimeout(updateBuyEstimate, 400);
+};
+document.getElementById('sellBtn').onclick = sellTokens;
+document.getElementById('sellBitsAmount').oninput = () => {
+  clearTimeout(buyEstimateTimer);
+  buyEstimateTimer = setTimeout(updateSellEstimate, 400);
 };
 document.getElementById('sendBtn').onclick = sendTokens;
 document.getElementById('stakeBtn').onclick = stakeTokens;
